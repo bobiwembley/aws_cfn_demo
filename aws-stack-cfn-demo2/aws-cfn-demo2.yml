@@ -37,13 +37,22 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties: 
        CidrBlock: 10.10.0.0/24
-       AvailabilityZone: !Select [ 0, !GetAZs ]
+       AvailabilityZone: us-east-1a
        MapPublicIpOnLaunch: true 
        VpcId: 
          Ref: 'VpcWebServer'
        Tags:
        - Key: Name
-         Value: !Sub ${AWS::StackName}-Public-WebServer  
+         Value: !Sub ${AWS::StackName}-Public-WebServer
+  VpcDatabasePrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1b
+      VpcId: !Ref 'VpcWebServer'
+      CidrBlock: 10.10.1.0/24
+      Tags:
+        - Key: WebServerPrivateServer
+          Value: !Sub ${AWS::StackName}-Private-WebServer 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     DependsOn: VpcWebServer
@@ -87,21 +96,57 @@ Resources:
       Tags:
       - Key: Name 
         Value: !Sub "${AWS::StackName}-InstanceID"
+  DatabaseWebServer:
+    Type: AWS::RDS::DBInstance
+    Properties:
+       AllocatedStorage: '5'
+       DBInstanceClass: db.t3.micro
+       DBName: KoukaDb
+       MasterUsername: KoukaUser
+       MasterUserPassword: KoukaPwd
+       Engine: mysql
+       EngineVersion: 5.7
+       DBSubnetGroupName: !Ref DatabaseSubnetgroup 
+       VPCSecurityGroups:
+         - !Ref DatabaseSecurityGroup
+       Tags:
+         - Key: name
+           Value: db-Webserver
   WebSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Enable SSH and HTTP on Ec2 WebServer
+      GroupDescription: Enable SSH and http on Ec2 WebServer
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
           CidrIp: !Ref 'SSHLocation'
         - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: '0.0.0.0/0'
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
       VpcId:
         Ref: VpcWebServer
+  DatabaseSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "Database instances security group"
+      VpcId: !Ref VpcWebServer
+      SecurityGroupIngress: 
+        - IpProtocol: "tcp"
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 10.10.0.0/24
+      SecurityGroupEgress: 
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+  DatabaseSubnetgroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription:  Private  Subnet for  RDS database
+      SubnetIds:
+        - !Ref VpcWebServerPublicSubnet
+        - !Ref VpcDatabasePrivateSubnet
 Outputs:
   StackVPC:
     Description: The ID of the VPC
