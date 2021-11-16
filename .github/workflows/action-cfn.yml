@@ -18,4 +18,4 @@ jobs:
       - name: Simple test
         uses: stelligent/cfn_nag@master
         with:
-          input_path: ./*/*.yml
+          input_path: aws-stack-cfn-demo3/aws_cfn-demo3.yml
