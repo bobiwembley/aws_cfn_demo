@@ -7,7 +7,7 @@ Parameters:
   KeyName:
       Description: ssh private key to connect to ec2
       Type: AWS::EC2::KeyPair::KeyName
-      Default: cloud ssh -i "cloud.pem" ubuntu@ec2-107-20-20-195.compute-1.amazonaws.com
+      Default: cloud 
       ConstraintDescription: Must be a keyPair existing on AWS account     
   SSHLocation:
     Description: The IP address range that can be used to SSH to the EC2 instances
@@ -121,6 +121,7 @@ Resources:
         - RegionMap
         - !Ref AWS::Region
         - AMI
+       KeyName: !Ref KeyName
        SecurityGroups:
         - !Ref WebSecurityGroup
        InstanceType: !Ref 'InstanceType'
