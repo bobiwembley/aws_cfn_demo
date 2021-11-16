@@ -12,3 +12,10 @@ jobs:
         run: |
           cfn-lint --version
           cfn-lint -t ./*/*.yml
+  cloudformation-Guard: 
+    runs-on: ubuntu-latest
+     steps:
+       - name: Simple test
+         uses: stelligent/cfn_nag@master
+         with:
+         input_path: ./*/*.yml
